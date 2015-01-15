@@ -1,6 +1,7 @@
 #include <linux/init.h>
 #include <linux/printk.h>
 #include <linux/fs.h>
+#include <linux/cdev.h>
 
 #include <linux/types.h>
 #include <linux/kdev_t.h>
@@ -16,8 +17,18 @@ int scull_quantum   = SCULL_QUANTUM;
 int scull_qset      = SCULL_QSET;
 
 static int result;
-
 struct scull_dev *scull_devices;	/* allocated in scull_init_module */
+struct scull_fops;
+
+struct file_operations scull_fops = {
+    .owner   = THIS_MODULE,
+    .llseek  = scull_llseek,
+    .read    = scull_read,
+    .write   = scull_write,
+    .ioctl   = scull_ioctl,
+    .open    = scull_open,
+    .release = scull_release, 
+};
 
 static void scull_setup_cdev(struct scull_dev *dev, int index)
 {
@@ -74,6 +85,10 @@ static int __init scull_init(void)
 		scull_setup_cdev(&scull_devices[i], i);
 	}
 
+	dev = MKDEV(scull_major, scull_minor + scull_nr_devs);
+	//dev += scull_p_init(dev);
+	//dev += scull_access_init(dev);
+
     return 0;
 
     fail:
@@ -93,12 +108,3 @@ static void __exit scull_cleanup(void)
 }
 module_exit(scull_cleanup);
 
-struct file_operations scull_fops = {
-    .owner   = THIS_MODULE,
-    .llseek  = scull_llseek,
-    .read    = scull_read,
-    .write   = scull_write,
-    .ioctl   = scull_ioctl,
-    .open    = scull_open,
-    .release = scull_release, 
-};
