@@ -1,7 +1,11 @@
 #include <linux/init.h>
-#include <linux/printk.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
+#include <linux/semaphore.h>
+
+#define init_MUTEX(LOCKNAME) sema_init (LOCKNAME, 1);
 
 #include <linux/types.h>
 #include <linux/kdev_t.h>
@@ -20,16 +24,64 @@ static int result;
 struct scull_dev *scull_devices;	/* allocated in scull_init_module */
 struct scull_fops;
 
+int scull_trim(struct scull_dev *dev)
+{
+	struct scull_qset *next, *dptr;
+	int qset = dev->qset;   /* "dev" is not-null */
+	int i;
+
+	for (dptr = dev->data; dptr; dptr = next) { /* all the list items */
+		if (dptr->data) {
+			for (i = 0; i < qset; i++)
+				kfree(dptr->data[i]);
+			kfree(dptr->data);
+			dptr->data = NULL;
+		}
+		next = dptr->next;
+		kfree(dptr);
+	}
+	dev->size = 0;
+	dev->quantum = scull_quantum;
+	dev->qset = scull_qset;
+	dev->data = NULL;
+	return 0;
+}
+
+int scull_open(struct inode *inode, struct file *filp)
+{
+	struct scull_dev *dev; /* device information */
+
+	dev = container_of(inode->i_cdev, struct scull_dev, cdev);
+	filp->private_data = dev; /* for other methods */
+
+	/* now trim to 0 the length of the device if open was write-only */
+	if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
+		if (down_interruptible(&dev->sem))
+			return -ERESTARTSYS;
+		scull_trim(dev); /* ignore errors */
+		up(&dev->sem);
+	}
+	return 0;          /* success */
+}
+
+int scull_release(struct inode *inode, struct file *filp)
+{
+	return 0;
+}
+
 struct file_operations scull_fops = {
     .owner   = THIS_MODULE,
+/*
     .llseek  = scull_llseek,
     .read    = scull_read,
     .write   = scull_write,
     .ioctl   = scull_ioctl,
+*/
     .open    = scull_open,
     .release = scull_release, 
 };
 
+/* module level functions*/
 static void scull_setup_cdev(struct scull_dev *dev, int index)
 {
     int err,devno = MKDEV(scull_major,scull_minor + index);
@@ -44,8 +96,33 @@ static void scull_setup_cdev(struct scull_dev *dev, int index)
         printk(KERN_NOTICE,"Error %d adding scull %d",err,index);
 }
 
-static int __init scull_init(void)
+void scull_cleanup(void)
 {
+	int i;
+	dev_t devno = MKDEV(scull_major, scull_minor);
+
+	/* Get rid of our char dev entries */
+	if (scull_devices) {
+		for (i = 0; i < scull_nr_devs; i++) {
+			scull_trim(scull_devices + i);
+			cdev_del(&scull_devices[i].cdev);
+		}
+		kfree(scull_devices);
+	}
+
+#ifdef SCULL_DEBUG /* use proc only if debugging */
+	scull_remove_proc();
+#endif
+
+    printk(KERN_INFO "scull module exit");
+	/* cleanup_module is never called if registering failed */
+	unregister_chrdev_region(devno, scull_nr_devs);
+
+}
+
+int scull_init(void)
+{
+    int i;
     printk(KERN_INFO "scull module init\n");
     if (scull_major)
     {
@@ -92,19 +169,10 @@ static int __init scull_init(void)
     return 0;
 
     fail:
-	    scull_cleanup_module();
+	    scull_cleanup();
 	    return result;
 
 }
 module_init(scull_init);
-
-static void __exit scull_cleanup(void)
-{
-    printk(KERN_INFO "scull module exit");
-
-	/* cleanup_module is never called if registering failed */
-	unregister_chrdev_region(devno, scull_nr_devs);
-
-}
 module_exit(scull_cleanup);
 
