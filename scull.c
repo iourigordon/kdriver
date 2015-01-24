@@ -54,6 +54,8 @@ int scull_open(struct inode *inode, struct file *filp)
 	dev = container_of(inode->i_cdev, struct scull_dev, cdev);
 	filp->private_data = dev; /* for other methods */
 
+    printk(KERN_INFO "scull open is called");
+
 	/* now trim to 0 the length of the device if open was write-only */
 	if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
 		if (down_interruptible(&dev->sem))
@@ -66,6 +68,7 @@ int scull_open(struct inode *inode, struct file *filp)
 
 int scull_release(struct inode *inode, struct file *filp)
 {
+    printk(KERN_INFO "scull open is called");
 	return 0;
 }
 
@@ -93,7 +96,7 @@ static void scull_setup_cdev(struct scull_dev *dev, int index)
 
     /* Fail gracefully if need be */
     if (err)
-        printk(KERN_NOTICE,"Error %d adding scull %d",err,index);
+        printk(KERN_NOTICE "Error %d adding scull %d",err,index);
 }
 
 void scull_cleanup(void)
@@ -123,6 +126,7 @@ void scull_cleanup(void)
 int scull_init(void)
 {
     int i;
+
     printk(KERN_INFO "scull module init\n");
     if (scull_major)
     {

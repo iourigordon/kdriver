@@ -18,7 +18,7 @@ struct scull_dev {
 
 #define SCULL_MAJOR 0
 #define SCULL_MINOR 0
-#define SCULL_NR_DEVS 1
+#define SCULL_NR_DEVS 4
 
 #ifndef SCULL_QUANTUM
 #define SCULL_QUANTUM 4000
