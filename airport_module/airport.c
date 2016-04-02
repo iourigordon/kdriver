@@ -15,22 +15,25 @@ enum {
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-static dev_t device;
+static int major_version;
+
+struct file_operations airport_ops = {
+    .owner = THIS_MODULE
+};
 
 static int airport_init(void)
 {
-
-    device = MKDEV(AIRPORT_MAJOR,0);
-    if (register_chrdev_region(device,1,"airport")) {
-        printk(KERN_ERR "Failed to get chrdev region");
-    }
+    major_version = register_chrdev(0, "airport", &airport_ops);
+    if (major_version < 0)
+        printk(KERN_ERR "Failed to register airport device\n");
+    class_create(THIS_MODULE,"");
     return 0;
 }
 
 static void airport_exit(void)
 {
     printk(KERN_ALERT "Unregistering airport devices\n");
-    unregister_chrdev_region(device,1); 
+    unregister_chrdev(major_version,"airport"); 
 }
 
 module_init(airport_init);
