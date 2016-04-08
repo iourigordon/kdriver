@@ -18,7 +18,9 @@ static char* device_ext[] = {"_hangar","_land_strip","_takeoff_strip"};
 
 MODULE_LICENSE("Dual BSD/GPL");
 
+static int major_versions[AIRPORT_MAX];
 static int major_version;
+
 static struct class*    airport_class;
 static struct device*   airport_device[AIRPORT_MAX];
 
