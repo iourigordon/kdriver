@@ -1,5 +1,43 @@
-\documentclass[11pt,twoside,a4paper]{article}
+\documentclass[10pt,twoside,a4paper]{article}
+\usepackage{graphicx}
 
 \begin{document}
-hello
+\title{Airport Kernel Driver}
+\maketitle
+
+\begin{abstract}
+This document describes airport implementation as a kernel driver. Airport has takeoff and landing strips and a hangar. Planes in the air will be implemented as processes in the user land. For plane to land it should be able to successfully execute write method of landing strip device. For plane to take of it needs to successfully execute read method of takeof strip device.
+
+\tableofcontents
+
+\section{Components}
+\subsection{Device Airport Hangar}
+Airport Hangar accepts planes from the landing strip, and once it has enough passengers for a single plane he is ready to dispatch one plane to a take off strip
+
+Airport hangar can have variable number of planes it able to keep, and can accept up to a maximum number of passengers.
+
+Passenger are 
+
+\subsection{Device Airport Land Strip}
+Airport Land Strip Device accepts planes from the user land. Land strip has a capacity of planes it can handle at the same time. If maximum number of planes are already using land strip then plane is denied access. Plane leaves land strip as soon as there is available space in Airport Hangar
+
+\subsection{Device Takeoff Strip}
+Airport Takeoff Strip device accepts planes from the Airport Hangar device. It has a capacity of maximum planes it can handle.
+
+\subsection{Plane}
+Plane is implemented as a user land process. Each plane has it's ID and passenger capacity.
+Passenger capacity is chosen randomly but never exceed 300 passengers. Once in the Airport hangar plane does not leave until it has full capacity
+
+In order to land plane needs to call write on Landing Strip device, passing in its ID and capacity.
+
+In order to take off plane need to call read on Takeoff Strip device. Once read executed successfully plane process exits.
+
+\subsection{Plane Dispatcher}
+Dispatcher generates planes, i.e. user land processes. Planes are generated at random intervals, not exceeding 2 seconds
+
+\section{Data Flow}
+
+\includegraphics[width=\linewidth]{data_flow.eps}
+
+\end{abstract}
 \end{document}
