@@ -15,7 +15,8 @@ ifneq ($(KERNELRELEASE),)
 # call from kernel build system
  
 obj-m	:= airport.o
- 
+airport-objs := airport_hangar.o airport_land_strip.o airport_takeoff_strip.o
+
 else
  
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
