@@ -32,23 +32,23 @@ static struct file_operations* airport_fops[] = {&airport_hangar_ops,&airport_la
 
 static int airport_init(void)
 {
+
     int device_count = 0;
 
-    printk(KERN_INFO "Loading airport driver ...\n");
+    printk(KERN_INFO "Loading airport_sim driver ...\n");
 
     for (device_count = 0; device_count<AIRPORT_MAX;device_count++) {
-        printk(KERN_INFO "Registering char dev %s\n",device_names[device_count]);
         major_versions[device_count] = register_chrdev(0, device_names[device_count], airport_fops[device_count]);
-        printk(KERN_INFO "major_version = %d\n",major_versions[device_count]);
         if (major_versions[device_count] < 0){
-            printk(KERN_ERR "Failed to register airport device major number\n");
+            int failed_device = device_count;
+            printk(KERN_ERR "Failed to register %s major number\n",device_names[device_count]);
             for(device_count-=1;device_count>-1;device_count--)
                 unregister_chrdev(major_versions[device_count],device_names[device_count]);
-            return major_versions[device_count];
+            return major_versions[failed_device];
         }
     }
 
-    airport_class = class_create(THIS_MODULE,"airport");
+    airport_class = class_create(THIS_MODULE,"airport_sim");
     if (IS_ERR(airport_class)) {
         printk(KERN_ERR "Failed to create class airport");
         for (device_count=0;device_count<AIRPORT_MAX;device_count++)
@@ -57,11 +57,11 @@ static int airport_init(void)
     }
     
     for (device_count=0;device_count<AIRPORT_MAX;device_count++) {
-        airport_device[device_count] = device_create(airport_class, NULL, MKDEV(major_version,1), NULL, "airport%s",device_ext[device_count]);
+        airport_device[device_count] = device_create(airport_class, NULL, MKDEV(major_versions[device_count],1), NULL, "airport%s",device_ext[device_count]);
         if (IS_ERR(airport_device[device_count])) {
-            printk(KERN_ERR "Failed to create airport_hangar device\n");
+            printk(KERN_ERR "Failed to create airport%s device\n",device_ext[device_count]);
             for (device_count-=1;device_count>-1;device_count--)
-                device_destroy(airport_class,MKDEV(major_version,1));
+                device_destroy(airport_class,MKDEV(major_versions[device_count],1));
             class_destroy(airport_class);
             for (device_count=0;device_count<AIRPORT_MAX;device_count++)
                 unregister_chrdev(major_versions[device_count],device_names[device_count]); 
@@ -69,20 +69,22 @@ static int airport_init(void)
         }
     } 
 
-    printk(KERN_INFO "Airport driver is loaded\n");
+    printk(KERN_INFO "airport_sim driver is loaded\n");
     return 0;
 }
 
 static void airport_exit(void)
 {
     int device_count;
-    printk(KERN_ALERT "Unregistering airport devices\n");
-    
+
+    printk(KERN_INFO "Unregistering airport devices\n");
     for (device_count=0;device_count<AIRPORT_MAX;device_count++)
-        device_destroy(airport_class, MKDEV(major_version,1));
+        device_destroy(airport_class, MKDEV(major_versions[device_count],1));
     class_destroy(airport_class);
     for (device_count=0;device_count<AIRPORT_MAX;device_count++)
         unregister_chrdev(major_versions[device_count],device_names[device_count]); 
+
+    printk(KERN_INFO "airport_sim Unloaded\n");
 }
 
 module_init(airport_init);

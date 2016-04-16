@@ -1,5 +1,5 @@
 #include <linux/fs.h>
 
-struct file_operations airpot_hangar_ops = {
+struct file_operations airport_hangar_ops = {
     .owner = THIS_MODULE
 };
