@@ -16,6 +16,7 @@ enum {
 
 static char* device_ext[] = {"_hangar","_land_strip","_takeoff_strip"};
 static char* device_names[] = {"airport_hangar","airport_land_strip","airport_takeoff_strip"};
+static dev_t dev_ts[AIRPORT_MAX];
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -32,10 +33,17 @@ static struct file_operations* airport_fops[] = {&airport_hangar_ops,&airport_la
 
 static int airport_init(void)
 {
-
+    int ret;
     int device_count = 0;
 
     printk(KERN_INFO "Loading airport_sim driver ...\n");
+
+    memset(dev_ts,0,sizeof(dev_t)*AIRPORT_MAX);
+    for (device_count = 0; device_count<AIRPORT_MAX;device_count++) {
+        ret = alloc_chrdev_region(&dev_ts[device_count],0,1,device_names[device_count]);
+        if (IS_ERR(ret)) {
+        }
+    }    
 
     for (device_count = 0; device_count<AIRPORT_MAX;device_count++) {
         major_versions[device_count] = register_chrdev(0, device_names[device_count], airport_fops[device_count]);
