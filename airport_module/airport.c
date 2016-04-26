@@ -20,8 +20,6 @@ static dev_t dev_ts[AIRPORT_MAX];
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-static int major_versions[AIRPORT_MAX];
-
 static struct class*    airport_class;
 static struct device*   airport_device[AIRPORT_MAX];
 
@@ -41,38 +39,43 @@ static int airport_init(void)
     memset(dev_ts,0,sizeof(dev_t)*AIRPORT_MAX);
     for (device_count = 0; device_count<AIRPORT_MAX;device_count++) {
         ret = alloc_chrdev_region(&dev_ts[device_count],0,1,device_names[device_count]);
-        if (IS_ERR(ret)) {
+        if (ERR_PTR(ret)) {
+            for(device_count-=1;device_count>-1;device_count--)
+                unregister_chrdev_region(dev_ts[device_count], 1);
+            return ret;
         }
     }    
 
+#if 0
     for (device_count = 0; device_count<AIRPORT_MAX;device_count++) {
         major_versions[device_count] = register_chrdev(0, device_names[device_count], airport_fops[device_count]);
         if (major_versions[device_count] < 0){
             int failed_device = device_count;
             printk(KERN_ERR "Failed to register %s major number\n",device_names[device_count]);
             for(device_count-=1;device_count>-1;device_count--)
-                unregister_chrdev(major_versions[device_count],device_names[device_count]);
+                unregister_chrdev_region(dev_ts[device_count], 1);
             return major_versions[failed_device];
         }
     }
+#endif
 
     airport_class = class_create(THIS_MODULE,"airport_sim");
     if (IS_ERR(airport_class)) {
         printk(KERN_ERR "Failed to create class airport");
         for (device_count=0;device_count<AIRPORT_MAX;device_count++)
-            unregister_chrdev(major_versions[device_count],device_names[device_count]); 
+            unregister_chrdev_region(dev_ts[device_count], 1);
         return PTR_ERR(airport_class);
     }
     
     for (device_count=0;device_count<AIRPORT_MAX;device_count++) {
-        airport_device[device_count] = device_create(airport_class, NULL, MKDEV(major_versions[device_count],1), NULL, "airport%s",device_ext[device_count]);
+        airport_device[device_count] = device_create(airport_class, NULL, dev_ts[device_count], NULL, "airport%s",device_ext[device_count]);
         if (IS_ERR(airport_device[device_count])) {
             printk(KERN_ERR "Failed to create airport%s device\n",device_ext[device_count]);
             for (device_count-=1;device_count>-1;device_count--)
-                device_destroy(airport_class,MKDEV(major_versions[device_count],1));
+                device_destroy(airport_class,dev_ts[device_count]);
             class_destroy(airport_class);
             for (device_count=0;device_count<AIRPORT_MAX;device_count++)
-                unregister_chrdev(major_versions[device_count],device_names[device_count]); 
+                unregister_chrdev_region(dev_ts[device_count], 1);
             return PTR_ERR(airport_device);
         }
     } 
@@ -87,10 +90,10 @@ static void airport_exit(void)
 
     printk(KERN_INFO "Unregistering airport devices\n");
     for (device_count=0;device_count<AIRPORT_MAX;device_count++)
-        device_destroy(airport_class, MKDEV(major_versions[device_count],1));
+        device_destroy(airport_class, dev_ts[device_count]);
     class_destroy(airport_class);
     for (device_count=0;device_count<AIRPORT_MAX;device_count++)
-        unregister_chrdev(major_versions[device_count],device_names[device_count]); 
+        unregister_chrdev_region(dev_ts[device_count], 1);
 
     printk(KERN_INFO "airport_sim Unloaded\n");
 }
