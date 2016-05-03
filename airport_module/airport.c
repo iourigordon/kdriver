@@ -46,19 +46,6 @@ static int airport_init(void)
         }
     }    
 
-#if 0
-    for (device_count = 0; device_count<AIRPORT_MAX;device_count++) {
-        major_versions[device_count] = register_chrdev(0, device_names[device_count], airport_fops[device_count]);
-        if (major_versions[device_count] < 0){
-            int failed_device = device_count;
-            printk(KERN_ERR "Failed to register %s major number\n",device_names[device_count]);
-            for(device_count-=1;device_count>-1;device_count--)
-                unregister_chrdev_region(dev_ts[device_count], 1);
-            return major_versions[failed_device];
-        }
-    }
-#endif
-
     airport_class = class_create(THIS_MODULE,"airport_sim");
     if (IS_ERR(airport_class)) {
         printk(KERN_ERR "Failed to create class airport");
