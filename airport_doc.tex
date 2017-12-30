@@ -6,7 +6,7 @@
 \maketitle
 
 \begin{abstract}
-This document describes airport implementation as a kernel driver. Airport has takeoff and landing strips and a hangar. Planes in the air will be implemented as processes in the user land. For plane to land it should be able to successfully execute write method of landing strip device. For plane to take of it needs to successfully execute read method of takeof strip device.
+This document describes airport implementation as a kernel driver. Airport has takeoff and landing strips and a hangar. Planes in the air will be implemented as processes in the user land. For plane to land it should be able to successfully execute write method of landing strip device. For plane to take off it needs to successfully execute read method of takeof strip device.
 
 \tableofcontents
 
@@ -14,12 +14,12 @@ This document describes airport implementation as a kernel driver. Airport has t
 \subsection{Device Airport Hangar}
 Airport Hangar accepts planes from the landing strip, and once it has enough passengers for a single plane he is ready to dispatch one plane to a take off strip
 
-Airport hangar can have variable number of planes it able to keep, and can accept up to a maximum number of passengers.
+Airport hangar can have variable number of planes it able to keep up to a set number. Airport hangar internal implementation is based on kfifo, that means planes are leaving the hangar in the order they arrived.
 
-Passenger are 
+Passenger are delivered to the hangar via kthread that wakes up randomly and generates random number of passengers each time;
 
 \subsection{Device Airport Land Strip}
-Airport Land Strip Device accepts planes from the user land. Land strip has a capacity of planes it can handle at the same time. If maximum number of planes are already using land strip then plane is denied access. Plane leaves land strip as soon as there is available space in Airport Hangar
+Airport Land Strip Device accepts planes from the user land. Land strip has a capacity of planes it can handle at the same time. If maximum number of planes are already using land strip then plane is denied access. Plane leaves land strip as soon as there is available space in Airport Hangar.
 
 \subsection{Device Takeoff Strip}
 Airport Takeoff Strip device accepts planes from the Airport Hangar device. It has a capacity of maximum planes it can handle.
@@ -28,16 +28,16 @@ Airport Takeoff Strip device accepts planes from the Airport Hangar device. It h
 Plane is implemented as a user land process. Each plane has it's ID and passenger capacity.
 Passenger capacity is chosen randomly but never exceed 300 passengers. Once in the Airport hangar plane does not leave until it has full capacity
 
-In order to land plane needs to call write on Landing Strip device, passing in its ID and capacity.
-
-In order to take off plane need to call read on Takeoff Strip device. Once read executed successfully plane process exits.
+\begin{enumerate}
+\item In order to land plane needs to call write on Landing Strip device, passing in its ID and capacity.
+\item In order to take off plane need to call read on Takeoff Strip device. Once read executed successfully plane process exits.
+\end{enumerate}
 
 \subsection{Plane Dispatcher}
 Dispatcher generates planes, i.e. user land processes. Planes are generated at random intervals, not exceeding 2 seconds
 
 \section{Data Flow}
 
-\includegraphics[width=\linewidth]{data_flow.eps}
 
 \end{abstract}
 \end{document}
