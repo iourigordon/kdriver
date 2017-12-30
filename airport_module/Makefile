@@ -15,7 +15,7 @@ ifneq ($(KERNELRELEASE),)
 # call from kernel build system
  
 obj-m	:= airport_sim.o
-airport_sim-objs := airport.o airport_hangar.o airport_land_strip.o airport_takeoff_strip.o
+airport_sim-y := airport.o airport_hangar.o airport_land_strip.o airport_takeoff_strip.o
 
 else
  
