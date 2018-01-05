@@ -1,5 +1,6 @@
-\documentclass[10pt,twoside,a4paper]{article}
+\documentclass[10pt,a4paper]{article}
 \usepackage{graphicx}
+\usepackage[margin=0.5in]{geometry}
 
 \begin{document}
 \title{Airport Kernel Driver}
@@ -11,12 +12,18 @@ This document describes airport implementation as a kernel driver. Airport has t
 \tableofcontents
 
 \section{Components}
+\subsection{Monitor}
+Monitor is a separate process that memmap internal hangar memory. It outputs formatted contents of the memory to stdout.
+
 \subsection{Device Airport Hangar}
-Airport Hangar accepts planes from the landing strip, and once it has enough passengers for a single plane he is ready to dispatch one plane to a take off strip
+Airport Hangar accepts planes from the landing strip, and once it has enough passengers for a single plane it is ready to dispatch one plane to a takeoff strip
 
-Airport hangar can have variable number of planes it able to keep up to a set number. Airport hangar internal implementation is based on kfifo, that means planes are leaving the hangar in the order they arrived.
+Airport hangar can have variable number of planes to keep up, to a set number. Airport hangar internal implementation is based on kfifo, that means planes are leaving the hangar in the order they arrived.
+Each airplane has a passenger capacity and as soon as there is enough passengers plane is ready for takeoff.
 
-Passenger are delivered to the hangar via kthread that wakes up randomly and generates random number of passengers each time;
+Passengers are delivered to the hangar via kthread that wakes up randomly and generates random number of passengers each time;
+
+Passengers are taken away by another kthread that wakes up randomly and takes away random number of passengers.
 
 \subsection{Device Airport Land Strip}
 Airport Land Strip Device accepts planes from the user land. Land strip has a capacity of planes it can handle at the same time. If maximum number of planes are already using land strip then plane is denied access. Plane leaves land strip as soon as there is available space in Airport Hangar.
@@ -36,7 +43,8 @@ Passenger capacity is chosen randomly but never exceed 300 passengers. Once in t
 \subsection{Plane Dispatcher}
 Dispatcher generates planes, i.e. user land processes. Planes are generated at random intervals, not exceeding 2 seconds
 
-\section{Data Flow}
+\section{Diagram}
+\includegraphics[width=\textwidth]{concept_diag.pdf}
 
 
 \end{abstract}
