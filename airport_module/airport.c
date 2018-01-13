@@ -29,6 +29,11 @@ extern struct file_operations airport_takeoff_strip_ops;
 
 static struct file_operations* airport_fops[] = {&airport_hangar_ops,&airport_land_strip_ops,&airport_takeoff_strip_ops};
 
+
+extern void test_kfifo(void);
+extern void print_kfifo(void);
+extern void delete_kfifo(void);
+
 static int airport_init(void)
 {
     int ret;
@@ -68,12 +73,22 @@ static int airport_init(void)
     } 
 
     printk(KERN_INFO "airport_sim driver is loaded\n");
+
+    printk(KERN_INFO "testing kfifo\n");
+    test_kfifo();
+    print_kfifo();
+    printk(KERN_INFO "done testing kfifo\n");
+
     return 0;
 }
 
 static void airport_exit(void)
 {
     int device_count;
+
+    printk(KERN_INFO "Deleting kfifo\n");
+    delete_kfifo();
+    printk(KERN_INFO "Done deleting kfifo\n");
 
     printk(KERN_INFO "Unregistering airport devices\n");
     for (device_count=0;device_count<AIRPORT_MAX;device_count++)
