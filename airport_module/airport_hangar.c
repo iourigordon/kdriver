@@ -28,11 +28,10 @@ int init_airport_hangar(int number_of_planes, int number_of_passengers) {
     return 0;
 }
 
-void test_kfifo(void) {
+void destroy_airport_hangar(void) {
+    if (!hangar_cache) {
+        printk(KERN_INFO "Hangar cache does not exist\n");
+    }
+    kmem_cache_destroy(hangar_cache);
 }
 
-void print_kfifo(void) {
-}
-
-void delete_kfifo(void) {
-}
