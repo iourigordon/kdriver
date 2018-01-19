@@ -29,9 +29,11 @@ extern struct file_operations airport_takeoff_strip_ops;
 
 static struct file_operations* airport_fops[] = {&airport_hangar_ops,&airport_land_strip_ops,&airport_takeoff_strip_ops};
 
-
 extern int init_airport_hangar(int number_of_planes, int number_of_passengers);
 extern void destroy_airport_hangar(void);
+
+extern int create_land_strip(dev_t dev_num);
+extern void destroy_land_strip(void);
 
 static int airport_init(void)
 {
@@ -73,7 +75,7 @@ static int airport_init(void)
 
 
     if ((ret=init_airport_hangar(20,100)) != 0) {
-        printk(KERN_INFO "Unregistering airport devices\n");
+        printk(KERN_ERR "Unregistering airport devices\n");
         for (device_count=0;device_count<AIRPORT_MAX;device_count++)
             device_destroy(airport_class, dev_ts[device_count]);
         class_destroy(airport_class);
@@ -81,6 +83,18 @@ static int airport_init(void)
             unregister_chrdev_region(dev_ts[device_count], 1);
         return ret;
     }
+
+    if (create_land_strip(dev_ts[AIRPORT_LAND_STRIP])) {
+        printk(KERN_ERR "Failed to register land strip\n");
+        destroy_airport_hangar();
+        printk(KERN_ERR "Unregistering airport devices\n");
+        for (device_count=0;device_count<AIRPORT_MAX;device_count++)
+            device_destroy(airport_class, dev_ts[device_count]);
+        class_destroy(airport_class);
+        for (device_count=0;device_count<AIRPORT_MAX;device_count++)
+            unregister_chrdev_region(dev_ts[device_count], 1);
+        return ret;
+    } 
 
     printk(KERN_INFO "airport_sim driver is loaded\n");
     return 0;
@@ -90,6 +104,7 @@ static void airport_exit(void)
 {
     int device_count;
 
+    destroy_land_strip();
     destroy_airport_hangar();
 
     printk(KERN_INFO "Unregistering airport devices\n");
