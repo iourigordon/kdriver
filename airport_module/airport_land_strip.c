@@ -1,5 +1,7 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
+#include <linux/kernel.h>
+#include <linux/thread_info.h>
 
 struct _land_strip {
     int max_planes;
@@ -9,8 +11,27 @@ struct _land_strip {
 
 static struct _land_strip land_strip;
 
+int land_strip_open(struct inode *inode, struct file *filp) {
+    struct _land_strip *land_strip_dev;
+
+    printk(KERN_INFO "Plane %d entering airspace\n",current->pid);
+
+    land_strip_dev = container_of(inode->i_cdev,struct _land_strip,cdev);
+    filp->private_data = land_strip_dev;
+
+    
+    return 0;
+}
+
+int land_strip_release(struct inode *indoe, struct file *filep) {
+    printk(KERN_INFO "Plane %d has landed\n",current->pid);
+    return 0;
+}
+
 struct file_operations airport_land_strip_ops = {
-    .owner = THIS_MODULE
+    .owner = THIS_MODULE,
+    .open = land_strip_open,
+    .release = land_strip_release
 };
 
 int create_land_strip(dev_t dev_num) {
