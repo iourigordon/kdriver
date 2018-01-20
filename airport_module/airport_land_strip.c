@@ -3,6 +3,8 @@
 #include <linux/kernel.h>
 #include <linux/thread_info.h>
 
+#define MAX_LAND_STRIP_PLANES 2
+
 struct _land_strip {
     int max_planes;
     int landed_planes;
@@ -35,6 +37,9 @@ struct file_operations airport_land_strip_ops = {
 };
 
 int create_land_strip(dev_t dev_num) {
+
+    land_strip.max_planes = MAX_LAND_STRIP_PLANES;
+
     cdev_init(&(land_strip.cdev),&airport_land_strip_ops);
     land_strip.cdev.owner = THIS_MODULE;
     land_strip.cdev.ops = &airport_land_strip_ops;
