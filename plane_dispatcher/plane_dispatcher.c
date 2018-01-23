@@ -16,23 +16,34 @@
 
 static bool exit_dispatcher;
 
+struct _plane {
+    __u64   plane_id;
+    int     passengers;
+};
+
 static void handler(int signum) {
     exit_dispatcher = true;
 }
 
 int plane(int num_passengers) {
+    struct _plane plane;
     int landing_strip;
     __u64 plane_id;
 
-    plane_id = getpid();
-    printf("Plane: id %ld; Passengers %d\n",plane_id,num_passengers);
+    plane.plane_id = getpid();
+    plane.passengers = num_passengers;
+
+    printf("Plane: id %ld; Passengers %d\n",plane.plane_id,plane.passengers);
 
     landing_strip = open("/dev/airport_land_strip",O_RDWR);
     if (landing_strip == -1) {
-        printf("Plane: id %d, failed to open airport_land_strip, errno %d, desc %s\n",plane_id,errno,strerror(errno));
+        printf("Plane: id %d, failed to open airport_land_strip, errno %d, desc %s\n",plane.plane_id,errno,strerror(errno));
         return 1;
     }    
 
+    if (write(landing_strip,&plane,sizeof(struct _plane)) == -1) {
+        printf("Plane: id %d, failed to land\n",plane.plane_id);
+    } 
     
     if (close(landing_strip) == -1) {
          printf("Plane: id %d, failed to close airport_land_strip, errno %d, desc %s\n",plane_id,errno,strerror(errno));

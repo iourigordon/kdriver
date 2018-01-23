@@ -2,18 +2,26 @@
 #include <linux/cdev.h>
 #include <linux/kernel.h>
 #include <linux/thread_info.h>
+#include <asm/atomic.h>
 
-#define MAX_LAND_STRIP_PLANES 2
+#define MAX_LAND_STRIP_RUNWAYS 2
 
 struct _land_strip {
     int max_planes;
-    int landed_planes;
+    atomic_t available_runways;
     struct cdev cdev;
 };
 
 static struct _land_strip land_strip;
 
-int land_strip_open(struct inode *inode, struct file *filp) {
+
+ssize_t write(struct file *filp, const char __user *buff, size_t count, loff_t *offp)
+{
+    return -1;
+}
+
+int land_strip_open(struct inode *inode, struct file *filp)
+{
     struct _land_strip *land_strip_dev;
 
     printk(KERN_INFO "Plane %d entering airspace\n",current->pid);
@@ -25,7 +33,8 @@ int land_strip_open(struct inode *inode, struct file *filp) {
     return 0;
 }
 
-int land_strip_release(struct inode *indoe, struct file *filep) {
+int land_strip_release(struct inode *indoe, struct file *filep)
+{
     printk(KERN_INFO "Plane %d has landed\n",current->pid);
     return 0;
 }
@@ -36,9 +45,11 @@ struct file_operations airport_land_strip_ops = {
     .release = land_strip_release
 };
 
-int create_land_strip(dev_t dev_num) {
+int create_land_strip(dev_t dev_num)
+{
 
-    land_strip.max_planes = MAX_LAND_STRIP_PLANES;
+    land_strip.max_planes = MAX_LAND_STRIP_RUNWAYS;
+    atomic_set(&land_strip.available_runways,MAX_LAND_STRIP_RUNWAYS);
 
     cdev_init(&(land_strip.cdev),&airport_land_strip_ops);
     land_strip.cdev.owner = THIS_MODULE;
@@ -51,7 +62,8 @@ int create_land_strip(dev_t dev_num) {
     return 0;
 }
 
-void destroy_land_strip(void) {
+void destroy_land_strip(void)
+{
     cdev_del((&land_strip.cdev));
 }
 
