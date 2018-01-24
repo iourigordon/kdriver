@@ -23,7 +23,7 @@ ssize_t write(struct file *filp, const char __user *buff, size_t count, loff_t *
     if(!plane_cache)
         return -EFAULT;
 
-    if(copy_from_user(plane_chache,buff,count))
+    if(copy_from_user(plane_cache,buff,count))
         return -EFAULT;
 
     /*insert into kfifo*/
