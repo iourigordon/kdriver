@@ -1,6 +1,7 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/kernel.h>
+#include <linux/uaccess.h>
 #include <linux/thread_info.h>
 #include <asm/atomic.h>
 
@@ -14,9 +15,19 @@ struct _land_strip {
 
 static struct _land_strip land_strip;
 
+void* get_cache(void);
 
 ssize_t write(struct file *filp, const char __user *buff, size_t count, loff_t *offp)
 {
+    void* plane_cache = get_cache();
+    if(!plane_cache)
+        return -EFAULT;
+
+    if(copy_from_user(plane_chache,buff,count))
+        return -EFAULT;
+
+    /*insert into kfifo*/
+
     return -1;
 }
 
@@ -28,7 +39,6 @@ int land_strip_open(struct inode *inode, struct file *filp)
 
     land_strip_dev = container_of(inode->i_cdev,struct _land_strip,cdev);
     filp->private_data = land_strip_dev;
-
     
     return 0;
 }
