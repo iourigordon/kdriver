@@ -27,6 +27,8 @@ ssize_t write(struct file *filp, const char __user *buff, size_t count, loff_t *
         return -EFAULT;
 
     /*insert into kfifo*/
+    if (!add_plane_to_hangar(plane_cache))
+        return -EFAULT; 
 
     return -1;
 }
