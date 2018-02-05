@@ -35,6 +35,9 @@ extern void destroy_airport_hangar(void);
 extern int create_land_strip(dev_t dev_num);
 extern void destroy_land_strip(void);
 
+extern int create_takeoff_strip(dev_t dev_num);
+extern void destroy_takeoff_strip(void);
+
 static int airport_init(void)
 {
     int ret;
@@ -96,6 +99,20 @@ static int airport_init(void)
         return ret;
     } 
 
+    if (create_takeoff_strip(dev_ts[AIRPORT_TAKEOFF_STRIP])) {
+        printk(KERN_ERR "Failed to register takeoff strip\n");
+        destroy_airport_hangar();
+        destroy_land_strip();
+        printk(KERN_ERR "Unregistering airport devices\n");
+        for (device_count=0;device_count<AIRPORT_MAX;device_count++)
+            device_destroy(airport_class, dev_ts[device_count]);
+        class_destroy(airport_class);
+        for (device_count=0;device_count<AIRPORT_MAX;device_count++)
+            unregister_chrdev_region(dev_ts[device_count], 1);
+        return ret;
+
+    }
+
     printk(KERN_INFO "airport_sim driver is loaded\n");
     return 0;
 }
@@ -104,6 +121,7 @@ static void airport_exit(void)
 {
     int device_count;
 
+    destroy_takeoff_strip();
     destroy_land_strip();
     destroy_airport_hangar();
 
