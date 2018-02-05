@@ -74,6 +74,6 @@ int create_land_strip(dev_t dev_num)
 
 void destroy_land_strip(void)
 {
-    cdev_del((&land_strip.cdev));
+    cdev_del(&(land_strip.cdev));
 }
 
