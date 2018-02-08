@@ -16,6 +16,7 @@ struct _land_strip {
 static struct _land_strip land_strip;
 
 void* get_cache(void);
+int add_plane_to_hangar(void* plane);
 
 ssize_t write(struct file *filp, const char __user *buff, size_t count, loff_t *offp)
 {
